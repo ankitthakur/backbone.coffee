@@ -1,6 +1,6 @@
 # Backbone.coffee 0.9.2
 
-  root = this
+  root = @
 
   previousBackbone = root.Backbone
 
@@ -23,7 +23,7 @@
 
   Backbone.setDomLibrary = (lib) -> $ = lib; return
 
-  Backbone.noConflict =  () -> root.Backbone = previousBackbone; this
+  Backbone.noConflict =  () -> root.Backbone = previousBackbone; @
 
   ### Turn on `emulateHTTP` to support legacy HTTP servers. Setting this option
       will fake `"PUT"` and `"DELETE"` requests via the `_method` parameter and
@@ -41,9 +41,9 @@
   eventSplitter = /\s+/
   Events = Backbone.events =
     on: (events, callback, context) ->
-        return this if !callback
+        return @ if !callback
         events = events.split eventSplitter
-        calls = if @_callbacks? then @_callbacks else @._callbacks = {}
+        calls = if @._callbacks? then @._callbacks else @._callbacks = {}
         while event = events.shift()
           list = calls[event]
           node = if list then list.tail else {}
@@ -52,6 +52,31 @@
           calls[event] =
             tail: tail
             next: if list then list.next else nod
-
         this
+
+    off: (events, callback, context) ->
+      return @ if !(calls = @._callbacks)
+      unless events or callback or context
+        delete @._callbacks
+        @
+
+      events = if events? then events.split eventSplitter else _.keys(calls)
+
+      while event = events.shift()
+        unless (list = calls[event] and (callback or context))
+          delete calls[event]
+          continue
+
+      for i in [list.length - 2...0] by -2
+        list.splice i, 2 unless (callback and list[i] isnt callback or 
+                                   context and list[i + 1] isnt context)
+
+      @
+
+    trigger: (events) ->
+      @ unless (calls = @._callbacks)
+
+      rest = []
+      events = events.split eventSplitter
+      
   return
