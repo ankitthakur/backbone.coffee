@@ -78,5 +78,18 @@
 
       rest = []
       events = events.split eventSplitter
+
+      rest[i - 1] = arguments[i] for i in [1..arguments.length]
       
+      while event = events.shift()
+        all = all.slice() if all = calls.all
+        list = list.slice() if list = calls[event]
+      
+      list[i].apply list[i + 1] || @, rest for i in [0..list.length] by 2 if list
+      
+      if (all)
+        args = [event].concat rest
+        all[i].apply all[i + 1] || @, args for i in [0..all.length] by 2
+      @
+
   return
