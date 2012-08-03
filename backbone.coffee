@@ -63,7 +63,7 @@
   #     object.on 'expand' () -> alert 'expanded'
   #     object.trigger 'expand'
   #
-  Events = Backbone.events =
+  Events = Backbone.Events =
 
     # Bind one or more space separated events, `events`, to a `callback`
     # function. Passing `"all"` will bind the callback to all events fired.
@@ -136,8 +136,8 @@
       @
 
     # Aliases for backwards compatibility.
-    Events.bind = Events.on
-    Events.unbind = Events.off
+    bind: @.on
+    unbind: @.off
 
 
   # Backbone.Model
@@ -145,9 +145,35 @@
 
   # Create a new model, with defined attributes. A client id (`cid`)
   # is automatically generated and assigned for you.
-  Model = Backbone.Model = (attributes, options) ->
-    attributes = {} unless attributes
-    @.collection = options.collection if options and options.collection
-    attributes = @.parse attributes if options and options.parse
-    attributes = _.extend {}, defaults, attributes if defaults = getValue @, 'defaults'
+  Backbone.Model = Model
+  class Model
+    
+    attributes = {}
+    _escapedAttributes = {}
+    cid = _.uniqueId 'c'
+    changed = {}
+    _silent = {}
+    _pending = {}
+
+
+
+    constructor: (attributes, options) ->
+      attributes = {} unless attributes
+      @.collection = options.collection if options and options.collection
+      attributes = @.parse attributes if options and options.parse
+      attributes = _.extend {}, defaults, attributes if defaults = getValue @, 'defaults'
+      @.set attributes, {silent: true}
+      # Reset change tracking
+      [@.changed, @._silent, @._pending] = [{},{},{}]
+      @._previousAttributes = _.clone @.attributes
+      @.initialize.apply @, arguments
+
+
+  # Attach all inheritable methods to the Model prototype.
+  _.extend Model::, Events,
+    
+    changed: null
+    
+
   return
+
