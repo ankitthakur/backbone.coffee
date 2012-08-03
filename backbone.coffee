@@ -1,7 +1,14 @@
 # Backbone.coffee 0.9.2
+  
+  # Initial Setup
+  # -------------
 
+  # Save a reference to the global object (`window` in the browser, `global`
+  # on the server).
   root = @
 
+  # Save the previous value of the `Backbone` variable, so that it can be
+  # restored later on, if `noConflict` is used.
   previousBackbone = root.Backbone
 
   # Create a local reference to slice/splice.
@@ -21,8 +28,11 @@
   # Current version of the library. Keep in sync with `package.json`.
   Backbone.VERSION = '0.9.2'
 
+  # For Backbone's purposes, jQuery, Zepto, or Ender owns the `$` variable.
   Backbone.setDomLibrary = (lib) -> $ = lib; return
 
+  # Runs Backbone.js in *noConflict* mode, returning the `Backbone` variable
+  # to its previous owner. Returns a reference to this Backbone object.
   Backbone.noConflict =  () -> root.Backbone = previousBackbone; @
 
   ### Turn on `emulateHTTP` to support legacy HTTP servers. Setting this option
@@ -38,8 +48,25 @@
   ###
   Backbone.emulateJSON = false;
 
+  # Backbone.Events
+  # -----------------
+
+  # Regular expression used to split event strings
   eventSplitter = /\s+/
+
+  # A module that can be mixed in to *any object* in order to provide it with
+  # custom events. You may bind with `on` or remove with `off` callback functions
+  # to an event; `trigger`-ing an event fires all callbacks in succession.
+  #
+  #     object = {}
+  #     _.extend object, Backbone.Events
+  #     object.on 'expand' () -> alert 'expanded'
+  #     object.trigger 'expand'
+  #
   Events = Backbone.events =
+
+    # Bind one or more space separated events, `events`, to a `callback`
+    # function. Passing `"all"` will bind the callback to all events fired.
     on: (events, callback, context) ->
         return @ if !callback
         events = events.split eventSplitter
@@ -52,16 +79,22 @@
           calls[event] =
             tail: tail
             next: if list then list.next else nod
-        this
+        @
 
+    # Remove one or many callbacks. If `context` is null, removes all callbacks
+    # with that function. If `callback` is null, removes all callbacks for the
+    # event. If `events` is null, removes all bound callbacks for all events.
     off: (events, callback, context) ->
+
+      # No events, or removing *all* events.
       return @ if !(calls = @._callbacks)
       unless events or callback or context
         delete @._callbacks
         @
 
       events = if events? then events.split eventSplitter else _.keys(calls)
-
+      
+      # Loop through the callback list, splicing where appropriate.
       while event = events.shift()
         unless (list = calls[event] and (callback or context))
           delete calls[event]
@@ -73,23 +106,37 @@
 
       @
 
+    # Trigger one or many events, firing all bound callbacks. Callbacks are
+    # passed the same arguments as `trigger` is, apart from the event name
+    # (unless you're listening on `"all"`, which will cause your callback to
+    # receive the true name of the event as the first argument).
     trigger: (events) ->
       @ unless (calls = @._callbacks)
 
       rest = []
       events = events.split eventSplitter
 
+      # Fill up `rest` with the callback arguments.  Since we're only copying
+      # the tail of `arguments`, a loop is much faster than Array#slice.
       rest[i - 1] = arguments[i] for i in [1..arguments.length]
       
+      # For each event, walk through the list of callbacks twice, first to
+      # trigger the event, then to trigger any `"all"` callbacks.
       while event = events.shift()
         all = all.slice() if all = calls.all
         list = list.slice() if list = calls[event]
       
+      # Execute event callbacks.
       list[i].apply list[i + 1] || @, rest for i in [0..list.length] by 2 if list
       
+      # Execute "all" callbacks.
       if (all)
         args = [event].concat rest
         all[i].apply all[i + 1] || @, args for i in [0..all.length] by 2
       @
+
+    # Aliases for backwards compatibility.
+    Events.bind = Events.on
+    Events.unbind = Events.off
 
   return
