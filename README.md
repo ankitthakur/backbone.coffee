@@ -1,3 +1,6 @@
+# Backbone.coffee
+This is just Backbone ported to CoffeeScript. Made for educational purposes (to learn both CoffeeScript and Backbone)
+
      ____                     __      __                                                 
     /\  _`\                  /\ \    /\ \                                   __           
     \ \ \ \ \     __      ___\ \ \/'\\ \ \____    ___     ___      __      /\_\    ____  
