@@ -139,4 +139,15 @@
     Events.bind = Events.on
     Events.unbind = Events.off
 
+
+  # Backbone.Model
+  # --------------
+
+  # Create a new model, with defined attributes. A client id (`cid`)
+  # is automatically generated and assigned for you.
+  Model = Backbone.Model = (attributes, options) ->
+    attributes = {} unless attributes
+    @.collection = options.collection if options and options.collection
+    attributes = @.parse attributes if options and options.parse
+    attributes = _.extend {}, defaults, attributes if defaults = getValue @, 'defaults'
   return
