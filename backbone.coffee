@@ -151,9 +151,9 @@
     attributes = {}
     _escapedAttributes = {}
     cid = _.uniqueId 'c'
-    changed = {}
-    _silent = {}
-    _pending = {}
+    changed = null
+    _silent = null
+    _pending = null
 
 
 
@@ -168,11 +168,34 @@
       @._previousAttributes = _.clone @.attributes
       @.initialize.apply @, arguments
 
+    initialize: () -> 
 
-  # Attach all inheritable methods to the Model prototype.
-  _.extend Model::, Events,
-    
-    changed: null
+    toJSON: (options) -> _.clone @.attributes
+
+    sync: () -> Backbone.sync.apply @, arguments
+
+    get: (attr) -> @.attributes[attr]
+
+    escape: (attr) ->
+      return html if html = @._escapedAttributes[attr]
+      val = @.get attr
+      return @._escapedAttributes[attr] = _.escape if val? then '' + val else ''
+
+    has: (attr) -> (@.get attr) isnt null
+
+    set: (key, value, options) ->
+
+      if (_.isObject key) or (key is null)
+        attrs = key
+        options = value
+      else
+        attrs = {}
+        attrs[key] = value
+
+      @
+
+  # Attach Events to Model prototype
+  _.extend Model::, Events
     
 
   return
